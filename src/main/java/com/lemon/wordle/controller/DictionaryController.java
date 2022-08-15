@@ -14,7 +14,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.lemon.wordle.beans.BeeWord;
 import com.lemon.wordle.beans.Word;
+import com.lemon.wordle.json.BeeWordSearch;
 import com.lemon.wordle.json.CharCount;
 import com.lemon.wordle.json.WordSearch;
 import com.lemon.wordle.service.DictionaryService;
@@ -37,10 +39,24 @@ public class DictionaryController {
 		return new ResponseEntity<String>("Success", HttpStatus.OK);
 	}
 	
+	@RequestMapping(path = "/load_bee", method = RequestMethod.POST)
+	public ResponseEntity<String> loadBeeDictionary() throws IOException {
+		final String fileName = "src/main/resources/words_alpha.txt";
+		dictionaryService.loadBeeDictionary(fileName);
+		return new ResponseEntity<String>("Success", HttpStatus.OK);
+	}
+	
 	@RequestMapping(path = "/search", method = RequestMethod.POST)
 	public ResponseEntity<List<String>> searchWord(@RequestBody final WordSearch wordSearch) throws IOException {
 		final List<String> words = dictionaryService.findWords(wordSearch).parallelStream()
 				.map(Word::getWord).toList();
+		return new ResponseEntity<List<String>>(words, HttpStatus.OK);
+	}
+	
+	@RequestMapping(path = "/search_bee", method = RequestMethod.POST)
+	public ResponseEntity<List<String>> searchBeeWord(@RequestBody final BeeWordSearch wordSearch) throws IOException {
+		final List<String> words = dictionaryService.findBeeWords(wordSearch).parallelStream()
+				.map(BeeWord::getWord).toList();
 		return new ResponseEntity<List<String>>(words, HttpStatus.OK);
 	}
 	

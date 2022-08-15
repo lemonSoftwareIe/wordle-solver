@@ -17,8 +17,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.lemon.wordle.beans.BeeWord;
 import com.lemon.wordle.beans.Word;
+import com.lemon.wordle.dao.BeeWordDao;
 import com.lemon.wordle.dao.WordDao;
+import com.lemon.wordle.json.BeeWordSearch;
 import com.lemon.wordle.json.CharCount;
 import com.lemon.wordle.json.WordSearch;
 
@@ -32,6 +35,9 @@ public class DictionaryService {
 	@Autowired
 	private WordDao wordDao;
 	
+	@Autowired
+	private BeeWordDao beeWordDao;
+	
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	public void loadDictionary(final String fileName) throws IOException {
 		final File file = new File(fileName);
@@ -43,12 +49,28 @@ public class DictionaryService {
 		wordDao.saveBatch(words);
 	}
 	
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	public void loadBeeDictionary(final String fileName) throws IOException {
+		final File file = new File(fileName);
+		final List<String> lines = FileUtils.readLines(file, Charset.forName("UTF-8"));
+		final List<BeeWord> words = lines.parallelStream()
+				.filter(w -> w.length() >= 4)
+				.map(w -> new BeeWord(w))
+				.collect(Collectors.toList());
+		beeWordDao.saveBatch(words);
+	}
+	
 	@Transactional(readOnly = true)
 	public List<Word> findWords(final WordSearch wordSearch) {
 		final List<Word> words = wordDao.findWords(wordSearch);
 		return words.parallelStream()
 				.filter(w -> notContainChars(w.getWord(), wordSearch.getDiscarded().toCharArray()))
 				.toList();
+	}
+	
+	@Transactional(readOnly = true)
+	public List<BeeWord> findBeeWords(final BeeWordSearch wordSearch) {
+		return beeWordDao.findWords(wordSearch);
 	}
 	
 	public boolean notContainChars(final String word, final char[] chars) {
